@@ -112,8 +112,10 @@ function callSendAPI(sender_psid, response) {
 
 // Handles messaging_postbacks events
 function handlePostback(sender_psid, received_postback) {
+    PREDICTION = "";
     let firstResponse;
     let secondResponse;
+    let flag = true;
 
     // Get the payload for the postback
     let payload = received_postback.payload;
@@ -130,24 +132,31 @@ function handlePostback(sender_psid, received_postback) {
     }
     // Payload = 'yes'
     else {
-        getPrediction().prediction;
-        setTimeout(wait, 2000);
+        flag = false;
+        setTimeout(waitPrediction, 2000);
+        getPrediction();
 
-        let firstResponse = PLACE + " is currently at its " + PREDICTION + " capacity.";
-        let secondResponse = "Consider going to " + PLACE + " at a later time";
+        function waitPrediction() {
+            let firstResponse = PLACE + " is currently at its " + PREDICTION + " capacity.";
+            let secondResponse = "Consider going to " + PLACE + " at a later time";
 
-        if (PREDICTION == "no populartimes data") {
-            firstResponse = "Sorry. There is no data available for this location.";
-            secondResponse = "Please stay safe at " + PLACE + " if you really have to go.";
-            console.log("no populartimes data:\n", firstResponse);
-        } else if (PREDICTION == "lowest" || PREDICTION == "average") {
-            secondResponse = "Please stay safe at " + PLACE + " .";
+            if (PREDICTION == "no populartimes data") {
+                firstResponse = "Sorry. There is no data available for this location.";
+                secondResponse = "Please stay safe at " + PLACE + " if you really have to go.";
+                console.log("no populartimes data:\n", firstResponse);
+            } else if (PREDICTION == "lowest" || PREDICTION == "average") {
+                secondResponse = "Please stay safe at " + PLACE + " .";
+            }
+
+            callSendAPI(sender_psid, firstResponse);
+            callSendAPI(sender_psid, secondResponse);
         }
     }
-
-    // Send the message to acknowledge the postback
-    callSendAPI(sender_psid, firstResponse);
-    callSendAPI(sender_psid, secondResponse);
+    if (flag) {
+        // Send the message to acknowledge the postback
+        callSendAPI(sender_psid, firstResponse);
+        callSendAPI(sender_psid, secondResponse);
+    }
 };
 
 // Send a postback to confirm user's destination
@@ -185,21 +194,23 @@ function handleMessage(sender_psid, received_message) {
     if (received_message.text) {
 
         // Create the payload for a basic text message
+        setTimeout(waitGetID, 2000);
         get_place_id(received_message.text);
-        setTimeout(wait, 2000);
-        if (PLACE_DETAILS) {
-            console.log("Place details:", PLACE_DETAILS);
-            PLACE = PLACE_DETAILS.name;
-            PLACE_ID = PLACE_DETAILS.place_id; //---------------------------------------------------------------------------
 
-            // send postback to validate destination
-            if (PLACE) {
+        function waitGetID() {
+            if (PLACE_DETAILS) {
+                console.log("Place details:", PLACE_DETAILS);
+                PLACE = PLACE_DETAILS.name;
+                PLACE_ID = PLACE_DETAILS.place_id;
+                PLACE_DETAILS = "";
+
+                // send postback to validate destination
                 response = `Confirm your destination is ${PLACE}?`;
                 sendPostBack(sender_psid, response);
                 return;
             }
-        } else {
-            response = { "text": "Please enter a valid input" }
+            response = "Oops. No data for this location";
+            callSendAPI(sender_psid, response);
         }
     } else {
         response = { "text": "Please enter a valid input" }
@@ -224,7 +235,9 @@ function get_place_id(search_string) {
 
         resp.on('end', () => {
             let place_data = JSON.parse(data);
-            PLACE_DETAILS = place_data.candidates[0];
+            if (place_data.candidates) {
+                PLACE_DETAILS = place_data.candidates[0];
+            }
         });
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
@@ -249,9 +262,7 @@ function getPrediction() {
     })
 };
 
-function wait() {
-    console.log("Waited 2 seconds for a function to execute");
-};
+
 
 bot.listen(bot.get('port'), function() {
     console.log("running on port:", PORT);
