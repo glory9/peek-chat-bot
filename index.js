@@ -183,6 +183,7 @@ function handleMessage(sender_psid, received_message) {
 
         // Create the payload for a basic text message
         let place_details = get_place_id(received_message.text);
+        console.log("Place details:", place_details);
         PLACE = place_details.name;
         PLACE_ID = place_details.place_id; //---------------------------------------------------------------------------
 
@@ -217,6 +218,7 @@ function get_place_id(search_string) {
 
         resp.on('end', () => {
             let place_data = JSON.parse(data);
+            console.log(place_data);
             return place_data.candidates[0];
         });
     }).on('error', err => {
