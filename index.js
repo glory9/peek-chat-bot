@@ -88,6 +88,7 @@ bot.post('/webhook', (req, res) => {
 // Sends response messages via the Send API
 function callSendAPI(sender_psid, response) {
     // Construct the message body
+    console.log("Sending response", response);
     let request_body = {
         "recipient": {
             "id": sender_psid
@@ -103,7 +104,7 @@ function callSendAPI(sender_psid, response) {
         "json": request_body
     }, (err, res, body) => {
         if (!err) {
-            console.log('message sent!')
+            console.log('message sent!', response);
         } else {
             console.error("Unable to send message:" + err);
         }
@@ -133,7 +134,7 @@ function handlePostback(sender_psid, received_postback) {
     // Payload = 'yes'
     else {
         flag = false;
-        setTimeout(waitPrediction, 2000);
+        setTimeout(waitPrediction, 1000);
         getPrediction();
 
         function waitPrediction() {
@@ -146,7 +147,7 @@ function handlePostback(sender_psid, received_postback) {
                 console.log("no populartimes data:\n", firstResponse);
             } else if (PREDICTION == "lowest" || PREDICTION == "average") {
                 secondResponse = "Please stay safe at " + PLACE + " .";
-            }
+            };
 
             callSendAPI(sender_psid, firstResponse);
             callSendAPI(sender_psid, secondResponse);
