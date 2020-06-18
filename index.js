@@ -218,7 +218,7 @@ function get_place_id(search_string) {
 
         resp.on('end', () => {
             let place_data = JSON.parse(data);
-            console.log(place_data);
+            console.log("Get_place_id result:", place_data, " and", place_data.candidates[0]);
             return place_data.candidates[0];
         });
     }).on('error', err => {
