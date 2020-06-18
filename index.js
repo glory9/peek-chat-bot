@@ -76,7 +76,8 @@ bot.post('/webhook', (req, res) => {
         }
 
         // Return a '200 OK' response to all events
-        //res.status(200).send('EVENT_RECEIVED');
+        res.status(200)
+            //send('EVENT_RECEIVED');
 
     } else {
         // Return a '404 Not Found' if event is not from a page subscription
@@ -133,7 +134,7 @@ function handlePostback(sender_psid, received_postback) {
     // Payload = 'yes'
     else {
         flag = false;
-        setTimeout(waitPrediction, 6000);
+        setTimeout(waitPrediction, 4000);
         getPrediction();
 
         function waitPrediction() {
