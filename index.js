@@ -122,7 +122,7 @@ function handlePostback(sender_psid, received_postback) {
 
     // Set the response based on the postback payload
     if (payload === 'first time user') {
-        firstResponse = { "text": `Hello ${{user_first_name}}, welcome to Peek!` };
+        firstResponse = { "text": "Hello, welcome to Peek!" };
         secondResponse = { "text": "Where would you like to go?" };
     } else if (payload === 'no') {
         PLACE = "";
