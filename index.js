@@ -183,15 +183,17 @@ function handleMessage(sender_psid, received_message) {
 
         // Create the payload for a basic text message
         let place_details = get_place_id(received_message.text);
-        console.log("Place details:", place_details);
-        PLACE = place_details.name;
-        PLACE_ID = place_details.place_id; //---------------------------------------------------------------------------
+        if (place_details) {
+            console.log("Place details:", place_details);
+            PLACE = place_details.name;
+            PLACE_ID = place_details.place_id; //---------------------------------------------------------------------------
 
-        // send postback to validate destination
-        if (PLACE) {
-            response = `Confirm your destination is ${PLACE}?`;
-            sendPostBack(sender_psid, response);
-            return;
+            // send postback to validate destination
+            if (PLACE) {
+                response = `Confirm your destination is ${PLACE}?`;
+                sendPostBack(sender_psid, response);
+                return;
+            }
         } else {
             response = { "text": "Please enter a valid input" }
         }
@@ -238,6 +240,7 @@ function getPrediction() {
         resp.on('end', () => {
             let result = JSON.parse(data);
             return result.prediction;
+            console.log("made it past return");
         });
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
