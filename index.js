@@ -76,13 +76,14 @@ bot.post('/webhook', (req, res) => {
             handleMessage(sender_psid, webhook_event.message);
         } else if (webhook_event.postback) {
             handlePostback(sender_psid, webhook_event.postback);
-        } else if (webhook_event.optin && webhook_event.optin.type == "one_time_notif_req") {
-            confirmOneTime(sender_psid, webhook_event.optin.one_time_notif_token);
         }
 
         // Return a '200 OK' response to all events
         res.status(200).send('EVENT_RECEIVED');
 
+    } else if (body.optin.type == "one_time_notif_req") {
+        confirmOneTime(body.sender.id, body.optin.one_time_notif_token);
+        res.status(200).send('EVENT_RECEIVED');
     } else {
         // Return a '404 Not Found' if event is not from a page subscription
         res.sendStatus(404);
@@ -294,8 +295,6 @@ function getPrediction() {
         console.log("[ERROR]: " + err.message);
     });
 };
-
-
 
 bot.listen(bot.get('port'), function() {
     console.log("running on port:", PORT);
