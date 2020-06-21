@@ -57,18 +57,17 @@ bot.post('/webhook', (req, res) => {
 
     // Parse the request body from the POST
     let body = req.body;
+    console.log('Message body:', body);
 
     // Check the webhook event is from a Page subscription
     if (body.object === 'page') {
 
         // Gets the body of the webhook event
         let webhook_event = body.entry[0].messaging[0];
-        console.log('Message:', webhook_event);
 
         // Get the sender PSID
         let sender_psid = webhook_event.sender.id;
         console.log('Sender PSID: ' + sender_psid);
-        console.log("response is", webhook_event);
 
         // Check if the event is a message or postback and
         // pass the event to the appropriate handler function
