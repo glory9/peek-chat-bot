@@ -68,6 +68,7 @@ bot.post('/webhook', (req, res) => {
         // Get the sender PSID
         let sender_psid = webhook_event.sender.id;
         console.log('Sender PSID: ' + sender_psid);
+        console.log("response is", webhook_event);
 
         // Check if the event is a message or postback and
         // pass the event to the appropriate handler function
@@ -127,7 +128,6 @@ function handlePostback(sender_psid, received_postback) {
     // Set the response based on the postback payload
     if (payload === 'first time user') {
         isReminder = true;
-        // "text": "Peek Reminder alerts you to check out your destination before heading out. Would you like to try it out?",
         firstResponse = { "text": "Hello, welcome to Peek!" };
         secondResponse = { "text": "Where would you like to go?" };
         reminder = {
@@ -135,7 +135,7 @@ function handlePostback(sender_psid, received_postback) {
                 "type": "template",
                 "payload": {
                     "template_type": "one_time_notif_req",
-                    "title": "Remind me",
+                    "title": "Peek Reminder alerts you to check out your destination",
                     "payload": "peek-reminder"
                 }
             }
