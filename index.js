@@ -127,7 +127,7 @@ function handlePostback(sender_psid, received_postback) {
     if (payload === 'first time user') {
         firstResponse = { "text": "Hello, welcome to Peek!" };
         secondResponse = { "text": "Where would you like to go?" };
-        reminder = {
+        let reminder = {
             "attachment": {
                 "type": "template",
                 "payload": {
@@ -146,7 +146,7 @@ function handlePostback(sender_psid, received_postback) {
             callSendAPI(sender_psid, reminder);
         });
     } else {
-        setTimeout(sendPrediction, 3000);
+        setTimeout(sendPrediction, 2000);
         getPrediction(payload);
         console.log(`\n\nConfirming destination for: ${received_postback}\n\n`)
 
