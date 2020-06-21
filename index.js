@@ -17,6 +17,7 @@ let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
 let PLACE = "";
 let PLACE_ID = "";
+let place_info = "";
 
 bot.set('port', PORT);
 bot.use(body_parser.urlencoded({ extended: false }));
@@ -187,7 +188,7 @@ function sendPostBack(sender_psid, response) {
 };
 
 // Handles messages events
-async function handleMessage(sender_psid, received_message) {
+function handleMessage(sender_psid, received_message) {
 
     let response;
 
@@ -195,22 +196,24 @@ async function handleMessage(sender_psid, received_message) {
     if (received_message.text) {
 
         // Create the payload for a basic text message
-        let place_info = await new Promise((resolve, rejects) => {
-            resolve(get_place_info(received_message.text));
-        });
-        if (place_info != null) {
-            console.log("Place details:", place_info);
-            PLACE = place_info.name;
-            PLACE_ID = place_info.place_id;
+        setTimeout(confirm_message, 2000);
+        get_place_info(received_message.text);
 
-            // send postback to validate destination
-            response = `Confirm your destination is ${PLACE}?`;
-            sendPostBack(sender_psid, response);
-        } else {
-            console.log("\n[ERROR]: No place info returned.\n");
-            response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
-            callSendAPI(sender_psid, response);
-        };
+        function confirm_message() {
+            if (place_info != null) {
+                console.log("Place details:", place_info);
+                PLACE = place_info.name;
+                PLACE_ID = place_info.place_id;
+
+                // send postback to validate destination
+                response = `Confirm your destination is ${PLACE}?`;
+                sendPostBack(sender_psid, response);
+            } else {
+                console.log("\n[ERROR]: No place info returned.\n");
+                response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
+                callSendAPI(sender_psid, response);
+            };
+        }
     } else {
         response = { "text": "Please enter a valid input" };
         callSendAPI(sender_psid, response);
@@ -232,14 +235,13 @@ function get_place_info(search_string) {
         resp.on('end', () => {
             let place_data = JSON.parse(data);
             if (place_data.candidates) {
-                return place_data.candidates[0];
+                place_info = place_data.candidates[0];
             }
         });
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
     })
     console.log("\n[ERROR] => Couldn't get google API response\n");
-    return null;
 };
 
 function getPrediction() {
