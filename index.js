@@ -198,7 +198,7 @@ function handleMessage(sender_psid, received_message) {
         let message_promise = new Promise((resolve, rejects) => {
             resolve(get_place_info(received_message.text));
         }).then(place_info => {
-            if (place_info) {
+            if (place_info != null) {
                 console.log("Place details:", place_info);
                 PLACE = place_info.name;
                 PLACE_ID = place_info.place_id;
@@ -207,6 +207,7 @@ function handleMessage(sender_psid, received_message) {
                 response = `Confirm your destination is ${PLACE}?`;
                 sendPostBack(sender_psid, response);
             } else {
+                console.log("\n[ERROR]: No place info returned.\n");
                 response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
                 callSendAPI(sender_psid, response);
             };
@@ -238,7 +239,8 @@ function get_place_info(search_string) {
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
     })
-    return;
+    console.log("\n[ERROR] => Couldn't get google API response\n");
+    return null;
 };
 
 function getPrediction() {
