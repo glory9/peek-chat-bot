@@ -14,6 +14,8 @@ function getPrediction() {
         resolve(get_place_id());
     }).then(value => {
         pprint(value);
+    }).catch(e => {
+        console.error(e);
     });
 
 };

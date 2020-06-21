@@ -5,6 +5,8 @@ const body_parser = require('body-parser');
 const request = require('request');
 const http = require('http');
 const https = require('https');
+const { rejects } = require('assert');
+const { resolve } = require('path');
 
 const bot = express();
 
@@ -15,8 +17,6 @@ let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
 let PLACE = "";
 let PLACE_ID = "";
-let PLACE_DETAILS = "";
-let PREDICTION = "";
 
 bot.set('port', PORT);
 bot.use(body_parser.urlencoded({ extended: false }));
@@ -112,7 +112,6 @@ function callSendAPI(sender_psid, response) {
 
 // Handles messaging_postbacks events
 function handlePostback(sender_psid, received_postback) {
-    PREDICTION = "";
     let firstResponse;
     let secondResponse;
 
@@ -131,27 +130,28 @@ function handlePostback(sender_psid, received_postback) {
     }
     // Payload = 'yes'
     else {
-        setTimeout(waitPrediction, 3000);
-        getPrediction();
-
-        function waitPrediction() {
-            firstResponse = PLACE + " is currently at its " + PREDICTION + " capacity.";
+        let predict_promise = new Promise((resolve, rejects) => {
+            resolve(getPrediction());
+        }).then(prediction => {
+            firstResponse = PLACE + " is currently at its " + prediction + " capacity.";
             secondResponse = "Consider going to " + PLACE + " at a later time";
 
-            if (PREDICTION == "no populartimes data") {
+            if (prediction == "no populartimes data") {
                 firstResponse = "Sorry. There is no data available for this location.";
                 secondResponse = "Please stay safe at " + PLACE + " if you really have to go.";
                 console.log("no populartimes data:\n", firstResponse);
-            } else if (PREDICTION == "lowest" || PREDICTION == "average") {
-                secondResponse = "Please stay safe at " + PLACE + " .";
+            } else if (prediction == "lowest" || prediction == "average") {
+                secondResponse = "Please stay safe at " + PLACE + ".";
             };
 
             firstResponse = { "text": firstResponse };
             secondResponse = { "text": secondResponse };
             callSendAPI(sender_psid, firstResponse);
             callSendAPI(sender_psid, secondResponse);
-            return;
-        }
+        }).catch(e => {
+            console.error(e);
+        })
+        return;
     }
 
     // Send the message to acknowledge the postback
@@ -195,25 +195,22 @@ function handleMessage(sender_psid, received_message) {
     if (received_message.text) {
 
         // Create the payload for a basic text message
-        // setTimeout will be reaplced by a promise in future update
-        setTimeout(waitGetID, 2000);
-        get_place_id(received_message.text);
-
-        function waitGetID() {
-            if (PLACE_DETAILS) {
-                console.log("Place details:", PLACE_DETAILS);
-                PLACE = PLACE_DETAILS.name;
-                PLACE_ID = PLACE_DETAILS.place_id;
-                PLACE_DETAILS = "";
+        let message_promise = new Promise((resolve, rejects) => {
+            resolve(get_place_info(received_message.text));
+        }).then(place_info => {
+            if (place_info) {
+                console.log("Place details:", place_info);
+                PLACE = place_info.name;
+                PLACE_ID = place_info.place_id;
 
                 // send postback to validate destination
                 response = `Confirm your destination is ${PLACE}?`;
                 sendPostBack(sender_psid, response);
-                return;
-            }
-            response = { "text": `Oops. No data for ${PLACE} yet` };
-            callSendAPI(sender_psid, response);
-        }
+            } else {
+                response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
+                callSendAPI(sender_psid, response);
+            };
+        });
     } else {
         response = { "text": "Please enter a valid input" };
         callSendAPI(sender_psid, response);
@@ -221,7 +218,7 @@ function handleMessage(sender_psid, received_message) {
 };
 
 // Extract place ID using Google Places API
-function get_place_id(search_string) {
+function get_place_info(search_string) {
     search_string = search_string.split(" ").join("%20");
 
     let PLACE_API_ENDPOINT = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${search_string}&inputtype=textquery&fields=formatted_address,name,place_id&key=${API_KEY}`;
@@ -235,12 +232,13 @@ function get_place_id(search_string) {
         resp.on('end', () => {
             let place_data = JSON.parse(data);
             if (place_data.candidates) {
-                PLACE_DETAILS = place_data.candidates[0];
+                return place_data.candidates[0];
             }
         });
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
     })
+    return;
 };
 
 function getPrediction() {
@@ -254,11 +252,13 @@ function getPrediction() {
 
         resp.on('end', () => {
             let result = JSON.parse(data);
-            PREDICTION = result.prediction;
+            return result.prediction;
         });
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
     })
+
+    return null;
 };
 
 
