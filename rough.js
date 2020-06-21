@@ -17,7 +17,11 @@ function getPrediction() {
     }).catch(e => {
         console.error(e);
     });
-
 };
+
+let opo = Promise.resolve(null);
+opo.then(value => {
+    console.log("Opoluma on the beat");
+});
 
 getPrediction();

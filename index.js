@@ -75,6 +75,8 @@ bot.post('/webhook', (req, res) => {
             handleMessage(sender_psid, webhook_event.message);
         } else if (webhook_event.postback) {
             handlePostback(sender_psid, webhook_event.postback);
+        } else if (webhook_event.optin && webhook_event.optin.type == "one_time_notif_req") {
+            confirmOneTime(sender_psid, webhook_event.optin.one_time_notif_token);
         }
 
         // Return a '200 OK' response to all events
@@ -116,14 +118,28 @@ function callSendAPI(sender_psid, response) {
 function handlePostback(sender_psid, received_postback) {
     let firstResponse;
     let secondResponse;
+    let isReminder = false;
+    let reminder = "";
 
     // Get the payload for the postback
     let payload = received_postback.payload;
 
     // Set the response based on the postback payload
     if (payload === 'first time user') {
+        isReminder = true;
         firstResponse = { "text": "Hello, welcome to Peek!" };
         secondResponse = { "text": "Where would you like to go?" };
+        reminder = {
+            "text": "Peek Reminder alerts you to check out your destination before heading out. Would you like to try it out?",
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "one_time_notif_req",
+                    "title": "Remind me",
+                    "payload": "peek-reminder"
+                }
+            }
+        };
     } else if (payload === 'no') {
         PLACE = "";
         PLACE_ID = "";
@@ -142,23 +158,31 @@ function handlePostback(sender_psid, received_postback) {
             if (prediction == "no populartimes data") {
                 firstResponse = "Sorry. There is no data available for this location.";
                 secondResponse = "Please stay safe at " + PLACE + " if you really have to go.";
-                console.log("no populartimes data:\n", firstResponse);
+                console.log("no populartimes data:\n");
             } else if (prediction == "lowest" || prediction == "average") {
                 secondResponse = "Please stay safe at " + PLACE + ".";
             };
 
             firstResponse = { "text": firstResponse };
-            secondResponse = { "text": secondResponse };
             callSendAPI(sender_psid, firstResponse);
+            secondResponse = { "text": secondResponse };
             callSendAPI(sender_psid, secondResponse);
         }
         return;
     }
 
     // Send the message to acknowledge the postback
-    callSendAPI(sender_psid, firstResponse);
-    callSendAPI(sender_psid, secondResponse);
-
+    let respond = Promise.resolve(null);
+    respond.then(x => {
+        callSendAPI(sender_psid, firstResponse);
+    }).then(x => {
+        callSendAPI(sender_psid, secondResponse);
+    });
+    if (isReminder) {
+        respond.then(x => {
+            callSendAPI(sender_psid, reminder);
+        });
+    }
 };
 
 // Send a postback to confirm user's destination
@@ -208,16 +232,24 @@ function handleMessage(sender_psid, received_message) {
                 // send postback to validate destination
                 response = `Confirm your destination is ${PLACE}?`;
                 sendPostBack(sender_psid, response);
-            } else {
-                console.log("\n[ERROR]: No place info returned.\n");
-                response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
-                callSendAPI(sender_psid, response);
-            };
+            }
+            // Figured it will be more natural ignore invalid text inputs
+            // else {
+            //     console.log("\n[ERROR]: No place info returned.\n");
+            //     response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
+            //     callSendAPI(sender_psid, response);
+            // }
         }
     } else {
         response = { "text": "Please enter a valid input" };
         callSendAPI(sender_psid, response);
     }
+};
+
+function confirmOneTime(sender_psid, one_time_token) {
+    // store sender id and token in Mongo DB
+    let word = { "text": "[SUCCESS] - Peek Reminder Enabled Successfully!" }
+    callSendAPI(sender_psid, word);
 };
 
 // Extract place ID using Google Places API
@@ -241,7 +273,6 @@ function get_place_info(search_string) {
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
     })
-    console.log("\n[ERROR] => Couldn't get google API response\n");
 };
 
 function getPrediction() {
