@@ -16,7 +16,6 @@ let API_KEY = process.env.API_KEY;
 let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
 let PLACE = "";
-let PLACE_ID = "";
 let place_info = "";
 let prediction = "";
 
@@ -120,8 +119,6 @@ function callSendAPI(sender_psid, response) {
 function handlePostback(sender_psid, received_postback) {
     let firstResponse;
     let secondResponse;
-    let isReminder = false;
-    let reminder = "";
 
     // Get the payload for the postback
     let payload = received_postback.payload;
@@ -141,71 +138,82 @@ function handlePostback(sender_psid, received_postback) {
                 }
             }
         };
-    } else if (payload === 'no') {
-        PLACE = "";
-        PLACE_ID = "";
-        firstResponse = { "text": "Oops, try entering your destination again" };
-        secondResponse = { "text": "You can also try the web version of Peek here: \nhttp://safe-peek.ue.r.appspot.com/" };
-    }
-    // Payload = 'yes'
-    else {
+        let respond = Promise.resolve(null);
+        respond.then(x => {
+            callSendAPI(sender_psid, firstResponse);
+        }).then(x => {
+            callSendAPI(sender_psid, secondResponse);
+        }).then(x => {
+            callSendAPI(sender_psid, reminder);
+        });
+    } else {
         setTimeout(sendPrediction, 3000);
-        getPrediction();
+        getPrediction(payload);
+        console.log(`\n\nConfirming destination for: ${received_postback}\n\n`)
 
         function sendPrediction() {
-            firstResponse = PLACE + " is currently at its " + prediction + " capacity.";
-            secondResponse = "Consider going to " + PLACE + " at a later time";
+            firstResponse = "Your destination is currently at its " + prediction + " capacity.";
+            secondResponse = "Consider going to there at a later time";
 
             if (prediction == "no populartimes data") {
                 firstResponse = "Sorry. There is no data available for this location.";
-                secondResponse = "Please stay safe at " + PLACE + " if you really have to go.";
+                secondResponse = "Please stay safe at your destination if you really have to go.";
                 console.log("no populartimes data:\n");
             } else if (prediction == "lowest" || prediction == "average") {
-                secondResponse = "Please stay safe at " + PLACE + ".";
+                secondResponse = "Please stay safe at your destination.";
             };
 
             firstResponse = { "text": firstResponse };
-            callSendAPI(sender_psid, firstResponse);
             secondResponse = { "text": secondResponse };
-            callSendAPI(sender_psid, secondResponse);
+            let respond = Promise.resolve(null)
+                .then(v => {
+                    callSendAPI(sender_psid, firstResponse);
+                }).then(v => {
+                    callSendAPI(sender_psid, secondResponse);
+                }).then(v => {
+                    suggestWebVersion(sender_psid);
+                });
         }
-        return;
-    }
-
-    // Send the message to acknowledge the postback
-    let respond = Promise.resolve(null);
-    respond.then(x => {
-        callSendAPI(sender_psid, firstResponse);
-    }).then(x => {
-        callSendAPI(sender_psid, secondResponse);
-    });
-    if (isReminder == true) {
-        respond.then(x => {
-            callSendAPI(sender_psid, reminder);
-            isReminder = false;
-        });
     }
 };
 
 // Send a postback to confirm user's destination
-function sendPostBack(sender_psid, response) {
+function suggestWebVersion(sender_psid) {
+
     let info = {
         "attachment": {
             "type": "template",
             "payload": {
                 "template_type": "button",
-                "text": response,
+                "text": "You can also try the web version of Peek here",
                 "buttons": [{
-                        "type": "postback",
-                        "title": "Yes",
-                        "payload": "yes",
-                    },
-                    {
-                        "type": "postback",
-                        "title": "No",
-                        "payload": "no",
-                    }
-                ],
+                    "type": "web_url",
+                    "url": "http://safe-peek.ue.r.appspot.com",
+                    "title": "Peek for Web",
+                }],
+            }
+        }
+    };
+
+    callSendAPI(sender_psid, info);
+};
+
+// Send a postback to confirm user's destination
+function sendPostBack(sender_psid, candidate) {
+    let place_name = candidate.name;
+    let address = candidate.formatted_address;
+    let place_id = candidate.place_id;
+    let info = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "button",
+                "text": `${place_name}\nAddress: ${address}`,
+                "buttons": [{
+                    "type": "postback",
+                    "title": "Select",
+                    "payload": place_id,
+                }],
             }
         }
     };
@@ -227,13 +235,15 @@ function handleMessage(sender_psid, received_message) {
 
         function confirm_message() {
             if (place_info != null) {
-                console.log("Place details:", place_info);
-                PLACE = place_info.name;
-                PLACE_ID = place_info.place_id;
+                // console.log("Place details:", place_info);
 
                 // send postback to validate destination
-                response = `Confirm your destination is ${PLACE}?`;
-                sendPostBack(sender_psid, response);
+                callSendAPI(sender_psid, {
+                    "text": "Select your destination."
+                });
+                place_info.forEach(candidate => {
+                    sendPostBack(sender_psid, candidate);
+                });
             }
             // Figured it will be more natural ignore invalid inputs
             // else {
@@ -270,7 +280,7 @@ function get_place_info(search_string) {
         resp.on('end', () => {
             let place_data = JSON.parse(data);
             if (place_data.candidates) {
-                place_info = place_data.candidates[0];
+                place_info = place_data.candidates;
             }
         });
     }).on('error', err => {
@@ -278,7 +288,7 @@ function get_place_info(search_string) {
     })
 };
 
-function getPrediction() {
+function getPrediction(PLACE_ID) {
     let PEEK_API_ENDPOINT = `http://safe-peek.ue.r.appspot.com/predict/${API_KEY}/${PLACE_ID}`;
     http.get(PEEK_API_ENDPOINT, resp => {
         let data = "";
