@@ -187,7 +187,7 @@ function sendPostBack(sender_psid, response) {
 };
 
 // Handles messages events
-function handleMessage(sender_psid, received_message) {
+async function handleMessage(sender_psid, received_message) {
 
     let response;
 
@@ -195,23 +195,22 @@ function handleMessage(sender_psid, received_message) {
     if (received_message.text) {
 
         // Create the payload for a basic text message
-        let message_promise = new Promise((resolve, rejects) => {
+        let place_info = await new Promise((resolve, rejects) => {
             resolve(get_place_info(received_message.text));
-        }).then(place_info => {
-            if (place_info != null) {
-                console.log("Place details:", place_info);
-                PLACE = place_info.name;
-                PLACE_ID = place_info.place_id;
-
-                // send postback to validate destination
-                response = `Confirm your destination is ${PLACE}?`;
-                sendPostBack(sender_psid, response);
-            } else {
-                console.log("\n[ERROR]: No place info returned.\n");
-                response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
-                callSendAPI(sender_psid, response);
-            };
         });
+        if (place_info != null) {
+            console.log("Place details:", place_info);
+            PLACE = place_info.name;
+            PLACE_ID = place_info.place_id;
+
+            // send postback to validate destination
+            response = `Confirm your destination is ${PLACE}?`;
+            sendPostBack(sender_psid, response);
+        } else {
+            console.log("\n[ERROR]: No place info returned.\n");
+            response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
+            callSendAPI(sender_psid, response);
+        };
     } else {
         response = { "text": "Please enter a valid input" };
         callSendAPI(sender_psid, response);
