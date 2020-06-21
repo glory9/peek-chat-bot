@@ -125,7 +125,6 @@ function handlePostback(sender_psid, received_postback) {
 
     // Set the response based on the postback payload
     if (payload === 'first time user') {
-        isReminder = true;
         firstResponse = { "text": "Hello, welcome to Peek!" };
         secondResponse = { "text": "Where would you like to go?" };
         reminder = {
