@@ -127,10 +127,10 @@ function handlePostback(sender_psid, received_postback) {
     // Set the response based on the postback payload
     if (payload === 'first time user') {
         isReminder = true;
+        // "text": "Peek Reminder alerts you to check out your destination before heading out. Would you like to try it out?",
         firstResponse = { "text": "Hello, welcome to Peek!" };
         secondResponse = { "text": "Where would you like to go?" };
         reminder = {
-            "text": "Peek Reminder alerts you to check out your destination before heading out. Would you like to try it out?",
             "attachment": {
                 "type": "template",
                 "payload": {
@@ -178,9 +178,10 @@ function handlePostback(sender_psid, received_postback) {
     }).then(x => {
         callSendAPI(sender_psid, secondResponse);
     });
-    if (isReminder) {
+    if (isReminder == true) {
         respond.then(x => {
             callSendAPI(sender_psid, reminder);
+            isReminder = false;
         });
     }
 };
@@ -233,17 +234,18 @@ function handleMessage(sender_psid, received_message) {
                 response = `Confirm your destination is ${PLACE}?`;
                 sendPostBack(sender_psid, response);
             }
-            // Figured it will be more natural ignore invalid text inputs
+            // Figured it will be more natural ignore invalid inputs
             // else {
             //     console.log("\n[ERROR]: No place info returned.\n");
             //     response = { "text": `Oops. No data for ${received_message.text}.\nPlease Check the input and try again.` };
             //     callSendAPI(sender_psid, response);
             // }
         }
-    } else {
-        response = { "text": "Please enter a valid input" };
-        callSendAPI(sender_psid, response);
     }
+    // else {
+    //     response = { "text": "Please enter a valid input" };
+    //     callSendAPI(sender_psid, response);
+    // }
 };
 
 function confirmOneTime(sender_psid, one_time_token) {
