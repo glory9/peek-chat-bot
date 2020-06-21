@@ -18,6 +18,7 @@ let VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 let PLACE = "";
 let PLACE_ID = "";
 let place_info = "";
+let prediction = "";
 
 bot.set('port', PORT);
 bot.use(body_parser.urlencoded({ extended: false }));
@@ -131,9 +132,10 @@ function handlePostback(sender_psid, received_postback) {
     }
     // Payload = 'yes'
     else {
-        let predict_promise = new Promise((resolve, rejects) => {
-            resolve(getPrediction());
-        }).then(prediction => {
+        setTimeout(sendPrediction, 2000);
+        getPrediction();
+
+        function sendPrediction() {
             firstResponse = PLACE + " is currently at its " + prediction + " capacity.";
             secondResponse = "Consider going to " + PLACE + " at a later time";
 
@@ -149,9 +151,7 @@ function handlePostback(sender_psid, received_postback) {
             secondResponse = { "text": secondResponse };
             callSendAPI(sender_psid, firstResponse);
             callSendAPI(sender_psid, secondResponse);
-        }).catch(e => {
-            console.error(e);
-        })
+        }
         return;
     }
 
@@ -255,13 +255,11 @@ function getPrediction() {
 
         resp.on('end', () => {
             let result = JSON.parse(data);
-            return result.prediction;
+            prediction = result.prediction;
         });
     }).on('error', err => {
         console.log("[ERROR]: " + err.message);
-    })
-
-    return null;
+    });
 };
 
 
