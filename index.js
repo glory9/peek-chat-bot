@@ -31,6 +31,7 @@ bot.get('/', function(req, res) {
 // Adds support for GET requests to our webhook
 bot.get('/webhook', (req, res) => {
     // Parse the query params
+    console.log("Get request:", req.body, req.query, req)
     let mode = req.query['hub.mode'];
     let token = req.query['hub.verify_token'];
     let challenge = req.query['hub.challenge'];
@@ -148,7 +149,7 @@ function handlePostback(sender_psid, received_postback) {
     }
     // Payload = 'yes'
     else {
-        setTimeout(sendPrediction, 2000);
+        setTimeout(sendPrediction, 3000);
         getPrediction();
 
         function sendPrediction() {

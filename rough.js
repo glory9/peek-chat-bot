@@ -1,8 +1,12 @@
-function get_place_id(search_string) {
-    for (let i = 0; i < 20000000; i += 2) {
+let test = "";
+
+function get_place_id() {
+    let t = 0
+    for (let i = 0; i < 200000000; i += 2) {
         i -= 1;
+        t = i;
     };
-    return "A promise that actually works. \nUsing this to practice js promises."
+    return t - 200000000; //"A promise that actually works. \nUsing this to practice js promises."
 };
 
 function pprint(x) {
@@ -11,17 +15,21 @@ function pprint(x) {
 
 function getPrediction() {
     let promise = new Promise((resolve, reject) => {
-        resolve(get_place_id());
+        console.log("x is-", test);
+        test = get_place_id();
+        console.log("x is-", test);
+        resolve(test);
     }).then(value => {
         pprint(value);
+        console.log("x is-", test);
     }).catch(e => {
         console.error(e);
     });
 };
 
-let opo = Promise.resolve(null);
-opo.then(value => {
-    console.log("Opoluma on the beat");
-});
+// let opo = Promise.resolve(null);
+// opo.then(value => {
+//     console.log("Opoluma on the beat");
+// });
 
 getPrediction();
