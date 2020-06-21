@@ -234,7 +234,6 @@ function handleMessage(sender_psid, received_message) {
 
         function confirm_message() {
             if (place_info != null) {
-                // console.log("Place details:", place_info);
 
                 // send postback to validate destination
                 callSendAPI(sender_psid, {
@@ -280,6 +279,7 @@ function get_place_info(search_string) {
             let place_data = JSON.parse(data);
             if (place_data.candidates) {
                 place_info = place_data.candidates;
+                console.log("Place Inof is----", place_info)
             }
         });
     }).on('error', err => {
