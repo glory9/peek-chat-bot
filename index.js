@@ -115,7 +115,6 @@ function handlePostback(sender_psid, received_postback) {
     PREDICTION = "";
     let firstResponse;
     let secondResponse;
-    let flag = true;
 
     // Get the payload for the postback
     let payload = received_postback.payload;
@@ -132,13 +131,12 @@ function handlePostback(sender_psid, received_postback) {
     }
     // Payload = 'yes'
     else {
-        flag = false;
-        setTimeout(waitPrediction, 4000);
+        setTimeout(waitPrediction, 3000);
         getPrediction();
 
         function waitPrediction() {
-            let firstResponse = PLACE + " is currently at its " + PREDICTION + " capacity.";
-            let secondResponse = "Consider going to " + PLACE + " at a later time";
+            firstResponse = PLACE + " is currently at its " + PREDICTION + " capacity.";
+            secondResponse = "Consider going to " + PLACE + " at a later time";
 
             if (PREDICTION == "no populartimes data") {
                 firstResponse = "Sorry. There is no data available for this location.";
@@ -148,15 +146,18 @@ function handlePostback(sender_psid, received_postback) {
                 secondResponse = "Please stay safe at " + PLACE + " .";
             };
 
+            firstResponse = { "text": firstResponse };
+            secondResponse = { "text": secondResponse };
             callSendAPI(sender_psid, firstResponse);
             callSendAPI(sender_psid, secondResponse);
+            return;
         }
     }
-    if (flag) {
-        // Send the message to acknowledge the postback
-        callSendAPI(sender_psid, firstResponse);
-        callSendAPI(sender_psid, secondResponse);
-    }
+
+    // Send the message to acknowledge the postback
+    callSendAPI(sender_psid, firstResponse);
+    callSendAPI(sender_psid, secondResponse);
+
 };
 
 // Send a postback to confirm user's destination
@@ -169,12 +170,12 @@ function sendPostBack(sender_psid, response) {
                 "text": response,
                 "buttons": [{
                         "type": "postback",
-                        "title": "Yes!",
+                        "title": "Yes",
                         "payload": "yes",
                     },
                     {
                         "type": "postback",
-                        "title": "No!",
+                        "title": "No",
                         "payload": "no",
                     }
                 ],
@@ -194,6 +195,7 @@ function handleMessage(sender_psid, received_message) {
     if (received_message.text) {
 
         // Create the payload for a basic text message
+        // setTimeout will be reaplced by a promise in future update
         setTimeout(waitGetID, 2000);
         get_place_id(received_message.text);
 
@@ -209,16 +211,13 @@ function handleMessage(sender_psid, received_message) {
                 sendPostBack(sender_psid, response);
                 return;
             }
-            response = "Oops. No data for this location";
+            response = { "text": `Oops. No data for ${PLACE} yet` };
             callSendAPI(sender_psid, response);
         }
     } else {
-        response = { "text": "Please enter a valid input" }
+        response = { "text": "Please enter a valid input" };
+        callSendAPI(sender_psid, response);
     }
-
-    // Sends the response message
-    callSendAPI(sender_psid, response);
-
 };
 
 // Extract place ID using Google Places API
