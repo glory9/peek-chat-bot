@@ -1,5 +1,6 @@
 # peek-chat-bot
-Chat bot interface for Peek. Peek helps people stay safe by avoiding crowded places.
+- Chat bot interface for Peek. Peek helps people stay safe by avoiding crowded places.
+- Refer to Peek App for more information - https://github.com/glory9/peek-app
 
 ## How It Works
 - This repository is hosted on heroku and connected to a facebook app which is also linked to Peek's Facebook page.
