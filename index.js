@@ -74,7 +74,7 @@ bot.post('/webhook', (req, res) => {
         if (webhook_event.message) {
             handleMessage(sender_psid, webhook_event.message);
         } else if (webhook_event.postback) {
-            console.log("\n\nPostback event log:", webhook_event, "\n\n")
+            //console.log("\n\nPostback event log:", webhook_event, "\n\n")
             handlePostback(sender_psid, webhook_event.postback);
         }
 
@@ -149,17 +149,18 @@ function handlePostback(sender_psid, received_postback) {
     } else {
         setTimeout(sendPrediction, 2000);
         getPrediction(payload);
+        let PLACE = received_postback.title.split("\n")[0];
 
         function sendPrediction() {
-            firstResponse = "Your destination is currently at its " + prediction + " capacity.";
-            secondResponse = "Consider going to there at a later time";
+            firstResponse = PLACE + " is currently at its " + prediction + " capacity.";
+            secondResponse = "Consider going to " + PLACE + " at a later time";
 
             if (prediction == "no populartimes data") {
-                firstResponse = "Sorry. There is no data available for this location.";
-                secondResponse = "Please stay safe at your destination if you really have to go.";
+                firstResponse = "Sorry. There is no data available for " + PLACE;
+                secondResponse = "Please stay safe at" + PLACE + " if you really have to go.";
                 console.log("no populartimes data:\n");
             } else if (prediction == "lowest" || prediction == "average") {
-                secondResponse = "Please stay safe at your destination.";
+                secondResponse = "Please stay safe at" + PLACE;
             };
 
             firstResponse = { "text": firstResponse };
