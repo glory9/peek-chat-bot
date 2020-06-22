@@ -54,5 +54,5 @@ list.buttons.forEach(element => {
 
 
 if (list.buttons.length > 0) {
-    console.log("List came out True")
+    console.log("List\ncame out True".split("\n")[0])
 }
