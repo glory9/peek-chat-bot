@@ -51,3 +51,8 @@ let list = {
 list.buttons.forEach(element => {
     console.log(element.title);
 });
+
+
+if (list.buttons.length > 0) {
+    console.log("List came out True")
+}

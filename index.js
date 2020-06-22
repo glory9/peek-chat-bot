@@ -74,6 +74,7 @@ bot.post('/webhook', (req, res) => {
         if (webhook_event.message) {
             handleMessage(sender_psid, webhook_event.message);
         } else if (webhook_event.postback) {
+            console.log("\n\nPostback event log:", webhook_event, "\n\n")
             handlePostback(sender_psid, webhook_event.postback);
         }
 
@@ -108,7 +109,7 @@ function callSendAPI(sender_psid, response) {
         "json": request_body
     }, (err, res, body) => {
         if (!err) {
-            console.log('[message sent!]--', response);
+            console.log('[message sent successfully!]');
         } else {
             console.error("Unable to send message:" + err);
         }
@@ -148,7 +149,6 @@ function handlePostback(sender_psid, received_postback) {
     } else {
         setTimeout(sendPrediction, 2000);
         getPrediction(payload);
-        console.log(`\n\nConfirming destination for: ${received_postback}\n\n`)
 
         function sendPrediction() {
             firstResponse = "Your destination is currently at its " + prediction + " capacity.";
@@ -233,7 +233,7 @@ function handleMessage(sender_psid, received_message) {
         get_place_info(received_message.text);
 
         function confirm_message() {
-            if (place_info != null) {
+            if (place_info.length > 0) {
 
                 // send postback to validate destination
                 callSendAPI(sender_psid, {
@@ -279,7 +279,6 @@ function get_place_info(search_string) {
             let place_data = JSON.parse(data);
             if (place_data.candidates) {
                 place_info = place_data.candidates;
-                console.log("Place Inof is----", place_info)
             }
         });
     }).on('error', err => {
