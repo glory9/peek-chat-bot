@@ -149,7 +149,7 @@ function handlePostback(sender_psid, received_postback) {
     } else {
         setTimeout(sendPrediction, 2000);
         getPrediction(payload);
-        let PLACE = received_postback.title.split("\n")[0];
+        let PLACE = "your destination"; //received_postback.title.split("\n")[0];
 
         function sendPrediction() {
             firstResponse = PLACE + " is currently at its " + prediction + " capacity.";
@@ -160,7 +160,7 @@ function handlePostback(sender_psid, received_postback) {
                 secondResponse = "Please stay safe at" + PLACE + " if you really have to go.";
                 console.log("no populartimes data:\n");
             } else if (prediction == "lowest" || prediction == "average") {
-                secondResponse = "Please stay safe at" + PLACE;
+                secondResponse = "Please stay safe at " + PLACE;
             };
 
             firstResponse = { "text": firstResponse };
