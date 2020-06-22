@@ -6,6 +6,9 @@
 - This repository is hosted on heroku and connected to a facebook app which is also linked to Peek's Facebook page.
 - Users can access the bot through Peek Facebook page in messenger.
 - Messages are sent/recieved via the Messenger webhook API defined inside the `node.js` server
+- A one-time notification is sent 24 hours after the user's last interaction with the bot (If the user subscribes to one-time notifications). The notification essentially reminds the user to use Peek to check out their destination (this is geared towards helping the user build a habit of using peek)
+
+
 
 
 ## Technologies Used
