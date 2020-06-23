@@ -1,3 +1,5 @@
+// Practice js file
+
 // let test = "";
 
 // function get_place_id() {
